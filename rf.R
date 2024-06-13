@@ -1,5 +1,5 @@
-setwd("C://Users//icozc//Documents//covid yeni")
-# required packages for 
+
+# required packages for the analyses
 library(sf)
 library(spdep)
 library(RColorBrewer)
