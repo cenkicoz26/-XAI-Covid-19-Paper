@@ -1,6 +1,6 @@
-
-# required packages for the analyses
+setwd("C://Users//icozc//Documents//covid yeni")
 library(sf)
+library(sp)
 library(spdep)
 library(RColorBrewer)
 library(tmap)
@@ -9,14 +9,24 @@ library(DALEX)
 library(ggplot2)
 library(gridExtra)
 library(tmap)
-library(rgdal)
-library(tmap)
 library(tmaptools)
 library(spgwr)
 library(grid)
+library(car)
+library(grid)
+library(corrplot)
+library(viridisLite)
 
-data<- read.csv("data.csv",header=TRUE,dec = ".",sep= ";",check.names=TRUE,fileEncoding ="latin1")
+data<- read.csv("son veri.csv",header=TRUE,dec = ".",sep= ";",check.names=TRUE,fileEncoding ="latin1")
 data<-data[,-1]
+
+# vif and correlation analysis 
+m1<-lm(data$cumcase~., data[,-19])
+vifres<-vif(m1)
+vifres[vifres>10]
+M<-cor(data)
+M1<-round(M,2)
+corrplot(M, method="circle")
 #setting a seed
 set.seed(1)
 # splitting data into 70% training  and 30% testing 
@@ -49,21 +59,22 @@ par(op)
                               y = data$cumcase, 
                         label = "Random Forest ")
  
-########################### Istanbul  
+########################### İstanbul  
 bd_rf_ist <- predict_parts(explainer = explain_rf,
                          new_observation = data[40,],
                            type = "break_down")
-
+bd_rf
+plot(bd_rf)
 bd_rf <- predict_parts(explainer = explain_rf,
                        new_observation = data[40,],
                        type = "break_down_interactions")
-i1<-plot(bd_rf)+ ggtitle("Break-down plot for Istanbul","") 
+i1<-plot(bd_rf)+ ggtitle("Break-down plot for İstanbul","") 
 #####################################
 shap_ist <- predict_parts(explainer = explain_rf, 
                             new_observation = data[40,], 
                             type = "shap",
                             B = 50)
-i2<-plot(shap_ist)+ ggtitle("SHAP for Istanbul","") 
+i2<-plot(shap_ist)+ ggtitle("SHAP for İstanbul","") 
 ########################## LIME
 library("DALEXtra")
 library("lime")
@@ -75,13 +86,13 @@ lime_ist <- predict_surrogate(explainer = explain_rf,
                                  n_features = 5, 
                                  n_permutations = 1000,
                                  type = "lime")
-i3<-plot(lime_ist)+ ggtitle("LIME plot for Istanbul","") 
+i3<-plot(lime_ist)+ ggtitle("LIME plot for İstanbul","") 
 ################### cetaris paribus
 cp_ist_rf <- predict_profile(explainer = explain_rf, 
                                  new_observation = data[40,])
 i4<-plot(cp_ist_rf, variables = c("gdp_per_capita", "age20.39","average_household_size","population_density")) +
   ggtitle("Ceteris-paribus profile", "") 
-################### histograms of positive contributing variables accordimg to LIME results
+################### histograms of positve contributing variables accordimg to LIME results
 
 i5<-ggplot(data, aes(x=age20.39))+
   geom_histogram(binwidth = 0.05,fill="#5F9EA0", color="#4682B4", alpha=0.95)+ theme_minimal()
@@ -91,7 +102,7 @@ i7<-ggplot(data, aes(x=gdp_per_capita))+
   geom_histogram(binwidth = 750,fill="#5F9EA0", color="#4682B4", alpha=0.95)+ theme_minimal()
 i8<-ggplot(data, aes(x=population_density))+
   geom_histogram(binwidth = 200,fill="#5F9EA0", color="#4682B4", alpha=0.95)+ theme_minimal()
-################ D0stanbul iC'in instance bazlD1 aC'D1klama
+################ İstanbul için instance bazlı açıklama
 grid.arrange(i1,i2,i3,i4,layout_matrix=rbind(c(1,1),c(2,3),c(4,4)))
 
 ################################################### Ankara 
@@ -154,7 +165,7 @@ cp_diy_rf <- predict_profile(explainer = explain_rf,
 d4<-plot(cp_diy_rf, variables = c("gdp_per_capita", "elderly_dep.ratio","average_household_size","automobile_number")) +
   ggtitle("Ceteris-paribus profile", "") 
 grid.arrange(d1,d2,d3,d4,layout_matrix=rbind(c(1,1),c(2,3),c(4,4)))
-################################# Şırnak
+################################# şırnak
 bd_rf_sh <- predict_parts(explainer = explain_rf,
                        new_observation = data[72,],
                        type = "break_down_interactions")
@@ -233,9 +244,9 @@ lime_m <- predict_surrogate(explainer = explain_rf,
                               type = "lime")
 m3<-plot(lime_m)+ ggtitle("LIME plot for Muğla","") 
 ################### cetaris paribus
-cp_mug <- predict_profile(explainer = explain_rf, 
+cp_diy_m <- predict_profile(explainer = explain_rf, 
                              new_observation = data[59,])
-m4<-plot(cp_mug, variables = c("gdp_per_capita", "population_density","average_household_size","elderly_dep.ratio","so2")) +
+m4<-plot(cp_diy_m, variables = c("gdp_per_capita", "population_density","average_household_size","elderly_dep.ratio","so2")) +
   ggtitle("Ceteris-paribus profile", "") 
 grid.arrange(m1,m2,m3,m4,layout_matrix=rbind(c(1,1),c(2,3),c(4,4)))
 ################################### Samsun 
@@ -261,22 +272,22 @@ lime_s <- predict_surrogate(explainer = explain_rf,
                             type = "lime")
 s3<-plot(lime_s)+ ggtitle("LIME plot for Samsun","") 
 ################### cetaris paribus
-cp_sam <- predict_profile(explainer = explain_rf, 
+cp_diy_s <- predict_profile(explainer = explain_rf, 
                             new_observation = data[67,])
-s4<-plot(cp_sam, variables = c("gdp_per_capita", "population_density","average_household_size","age40.59","age80.")) +
+s4<-plot(cp_diy_s, variables = c("gdp_per_capita", "population_density","average_household_size","age40.59","age80.")) +
   ggtitle("Ceteris-paribus profile", "") 
 grid.arrange(s1,s2,s3,s4,layout_matrix=rbind(c(1,1),c(2,3),c(4,4)))
 #################################### Çorum
 bd_rf_c <- predict_parts(explainer = explain_rf,
                          new_observation = data[24,],
                          type = "break_down_interactions")
-c1<-plot(bd_rf_c)+ ggtitle("Break-down plot for Corum","") 
+c1<-plot(bd_rf_c)+ ggtitle("Break-down plot for Çorum","") 
 #####################################
 shap_c <- predict_parts(explainer = explain_rf, 
                         new_observation = data[24,], 
                         type = "shap",
                         B = 50)
-c2<-plot(shap_c)+ ggtitle("SHAP for Corum","") 
+c2<-plot(shap_c)+ ggtitle("SHAP for Çorum","") 
 ########################## LIME
 library("DALEXtra")
 library("lime")
@@ -288,27 +299,30 @@ lime_c <- predict_surrogate(explainer = explain_rf,
                             n_features = 5, 
                             n_permutations = 1000,
                             type = "lime")
-c3<-plot(lime_c)+ ggtitle("LIME plot for Corum","") 
+c3<-plot(lime_c)+ ggtitle("LIME plot for Çorum","") 
 ################### cetaris paribus
-cp_c <- predict_profile(explainer = explain_rf, 
+cp_diy_c <- predict_profile(explainer = explain_rf, 
                             new_observation = data[24,])
-c4<-plot(cp_c, variables = c("gdp_per_capita", "population_density","average_household_size","unemployment","age20.39")) +
+c4<-plot(cp_diy_c, variables = c("gdp_per_capita", "population_density","average_household_size","unemployment","age20.39")) +
   ggtitle("Ceteris-paribus profile", "") 
 grid.arrange(c1,c2,c3,c4,layout_matrix=rbind(c(1,1),c(2,3),c(4,4)))
 
-################################# Model fit according to local neighbors of  istanbul and ED1rnak (Figure 4 Figure 5)
+################################# Model fit according to local neighbors of  istanbul and Şırnak (Figure 4 Figure 5)
 
 id_rfist <- predict_diagnostics(explainer = explain_rf,
                              new_observation = data[40,],
-                             neighbours = 20)
+                             neighbours = 10)
 plot(id_rfist)
-
+id_rfdiy <- predict_diagnostics(explainer = explain_rf,
+                                new_observation = data[26,],
+                                neighbours = 10)
+plot(id_rfdiy)
 
 id_rfsir <- predict_diagnostics(explainer = explain_rf,
                                 new_observation = data[72,],
-                                neighbours = 20)
+                                neighbours = 10)
 plot(id_rfsir)
-### DiyarbakD1r's neighbors prediction according to average household size variable
+### Diyarbakır's negihbors prediction according to average household size variable
 id_rf_diyahh <- predict_diagnostics(explainer = explain_rf,
                                  new_observation = data[26,],
                                  neighbours = 10,
@@ -328,17 +342,16 @@ pie(percentage,labels=paste0(names(percentage)," ",round(100*as.numeric(percenta
 #linear regression models
 model1<-lm(data$cumcase~data$unemployment+data$gdp_per_capita+data$average_household_size+data$elderly_dep.ratio+data$automobile_number+data$literacy) # r^2=0.44 
 model2<-lm(formula = data$cumcase ~ data$gdp_per_capita) # r^2=0.24
-########## residual maps of linear regression
-gwr<-readOGR("D__covid yeni.shp",encoding="latin")
+########## residual maps of linear regressiongwr<-readOGR("D__covid yeni.shp",encoding="latin")
 gwr@data[["NAME_1"]][c(2,4,11,12,13,17,22,23,24,26)]<-c("Adıyaman","Ağrı","Aydın",
                                                         "Balıkesir","Bartın","Bingöl","Çanakkale","Çankırı","Çorum","Diyarbakır")  
 gwr@data[["NAME_1"]][c(27,29,32,35,38,40,41,42,43,49,50,51,54,59,60,61,62,68,71,73,77,81)]<-c("Düzce","Elazığ","Eskişehir","Gümüşhane",
                                                                                               "Iğdır", "İstanbul","İzmir","Kahramanmaraş",  "Karabük", "Kırıkkale","Kırklareli","Kırşehir",
                                                                                               "Kütahya","Muğla","Muş","Nevşehir","Niğde","Şanlıurfa","Şırnak","Tekirdağ","Uşak","Zonguldak" ) 
-deg<-read.csv("data.csv",header=TRUE,dec = ".",sep= ";",check.names="FALSE",encoding="Turkish")
+deg<-read.csv("son veri.csv",header=TRUE,dec = ".",sep= ";",check.names="FALSE",encoding="Turkish")
 # merging data with shape file 
 gwrsh<-merge(gwr,deg,by="NAME_1")
-#writeOGR(gwrsh,layer=getwd(),"gwrsh",driver="ESRI Shapefile",encoding="UTF-8")
+writeOGR(gwrsh,layer=getwd(),"gwrsh",driver="ESRI Shapefile",encoding="UTF-8")
 resids <- round(residuals(model1),2)
 map.resids <- cbind(gwrsh, resids) 
 names(map.resids)[44] <- "resids"
@@ -427,7 +440,7 @@ print(map6, vp=viewport(layout.pos.col = 2, layout.pos.row =3))
 dev.off()
 
 #################### Spatial Random Forest
-library(rgeos)
+#library(rgeos)
 library("SpatialML")
 cent     <- as.data.frame(gCentroid(gwr, byid = TRUE, id = gwr@data$NAME_1))
 grf6 <- grf(cumcase ~        
@@ -476,7 +489,8 @@ tmap_mode("plot")+
 #dev.off()
 ########### pie graph Figure 10
 yzd<-table(primfact)*(1/length(primfact))
-pie(yzd,labels=paste0(names(yzd)," ",round(100*as.numeric(yzd), digits = 0),"%"),col=rainbow(6))
+pie(yzd,labels=names(yzd),col=c(""))
+pie(yzd,labels=paste0(names(yzd)," ",round(100*as.numeric(yzd), digits = 0),"%"),col=rainbow(5))
 ################## Autocorrelation of residuals and  maps ( OOB and Predicted)
 residuals<-grf6$LGofFit[,c(3,5)]
 resd<-cbind.data.frame(residuals,ID=1:81)
@@ -500,3 +514,230 @@ globalMoran <- moran.test(grf6res$LM_ResOOB, listw)
 globalMoran
 globalMoran2 <- moran.test(grf6res$LM_ResPred, listw)
 globalMoran2
+
+############################################## corrected primary factor maps
+################ 1-) LIME
+library(sf)
+library(tmap)
+library(ggplot2)
+library(viridisLite)
+
+tmap_mode("plot")
+tmap_options(component.autoscale = FALSE)  
+
+# =========================
+# 1) Merge + prepare palette (guaranteed identical colors)
+# =========================
+prime_fac <- data.frame(
+  ID = 1:81,
+  prfact = as.character(prfact),
+  stringsAsFactors = FALSE
+)
+
+gwr@data$ID <- 1:81
+gwrpf <- merge(gwr, prime_fac, by = "ID", all.x = TRUE)
+
+# sf + project to meters
+gwrpf_sf_m <- st_transform(st_as_sf(gwrpf), 32636)
+
+# fixed order (THIS controls color mapping)
+levels_fixed <- c(
+  "average_household_size",
+  "elderly_dep.ratio",
+  "gdp_per_capita",
+  "population_density",
+  "so2"
+)
+
+# enforce fixed levels
+gwrpf_sf_m$prfact <- factor(gwrpf_sf_m$prfact, levels = levels_fixed)
+
+# ONE shared palette (named) -> same for map + barplot
+pal <- viridis(length(levels_fixed), option = "D")
+names(pal) <- levels_fixed
+
+# =========================
+# 2) TMAP (separate map)
+# =========================
+limeprfacmap <- tm_shape(gwrpf_sf_m) +
+  tm_polygons(
+    fill = "prfact",
+    fill.scale  = tm_scale_categorical(values = pal),
+    fill.legend = tm_legend(title = "Top factor")
+  ) +
+  tm_compass(
+    type = "rose",
+    position = tm_pos_in("left", "top"),
+    offset=c(0.01,-2.4),
+    size = 2
+  ) +
+  tm_scale_bar(
+    position = tm_pos_in("left", "bottom"),
+    text.size = 0.6
+  ) +
+  tm_layout(  inner.margins = c(0.3, 0.01, 0.01, 0.01), 
+                        outer.margins = c(0,0.1,0.1,0.1), 
+                        meta.margins = c(0.2,0,0,0),
+    legend.outside = TRUE,
+    legend.outside.position = "left",
+    frame = FALSE
+  )
+
+limeprfacmap
+
+tmap_save(
+  tm = limeprfacmap,
+  filename = "lime_prfac300dpi.png",
+  width = 8,
+  height = 6,
+  units = "in",
+  dpi = 300
+)
+
+
+# =========================
+# 3) BARPLOT (separate plot: percentages + descending)
+# =========================
+bar_df <- as.data.frame(table(gwrpf_sf_m$prfact))
+colnames(bar_df) <- c("Factor", "Count")
+
+bar_df$Percent <- 100 * bar_df$Count / sum(bar_df$Count)
+
+# keep Factor levels fixed for color mapping
+bar_df$Factor <- factor(as.character(bar_df$Factor), levels = levels_fixed)
+
+# sort by Percent (display order)
+bar_df <- bar_df[order(-bar_df$Percent), ]
+
+ggplot(bar_df, aes(x = reorder(Factor, Percent), y = Percent, fill = Factor)) +
+  geom_col(width = 0.7) +
+  scale_fill_manual(values = pal, drop = FALSE) +
+  coord_flip() +
+  ylab("Percentage (%)") +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "none",
+    axis.title.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+###### Fİg 10 reviewer changes 
+
+tmap_mode("plot")
+tmap_options(component.autoscale = FALSE)
+
+# ---- 1) Convert to sf + project to meters ----
+grfsp_sf_m <- st_transform(st_as_sf(grfsp), 32636)
+
+# ---- 2) Fixed order (controls color mapping) ----
+levels_fixed <- c(
+  "average_household_size",
+  "elderly_dep.ratio",
+  "gdp_per_capita",
+  "unemployment" ,
+  "literacy",
+  "automobile_number"
+)
+
+# Ensure prfact exists and is character first (prevents weird factor carry-over)
+grfsp_sf_m$prfact <- as.character(grfsp_sf_m$primfact)
+
+# Enforce fixed levels
+grfsp_sf_m$prfact <- factor(grfsp_sf_m$primfact, levels = levels_fixed)
+
+# ---- 3) ONE shared named palette ----
+pal <- viridis(length(levels_fixed), option = "D")
+names(pal) <- levels_fixed
+
+# ---- 4) tmap ----
+grfsp_map <- tm_shape(grfsp_sf_m) +
+  tm_polygons(
+    fill = "primfact",
+    fill.scale  = tm_scale_categorical(values = pal),
+    fill.legend = tm_legend(title = "Top factor"),
+    col = "grey60",
+    lwd = 0.2
+  ) +
+  tm_compass(
+    type = "rose",
+    position = tm_pos_in("left", "top"),
+    offset = c(0.01, -2.4),
+    size = 2
+  ) +
+  tm_scalebar(
+    position = tm_pos_in("left", "bottom"),
+    text.size = 0.6
+  ) +
+  tm_layout(
+    inner.margins = c(0.25, 0.01, 0.01, 0.01),
+    outer.margins = c(0,0.1,0.1,0.1), 
+    meta.margins = c(0.22,0,0,0),
+    legend.outside = TRUE,
+    legend.outside.position = "left",
+    frame = FALSE
+  )
+
+grfsp_map
+
+# ---- 5) save 300 dpi ----
+tmap_save(grfsp_map, "grfsp_prfact_300dpi.png",
+          width = 8, height = 6, units = "in", dpi = 300)
+
+# barplot
+
+# Convert to sf if needed
+grfsp_sf <- st_as_sf(grfsp)
+
+# FIXED order (same as tmap)
+
+# Make sure the variable is character first (avoids factor carryover)
+grfsp_sf$primfact <- as.character(grfsp_sf$primfact)
+
+# Enforce fixed levels (same mapping as tmap)
+grfsp_sf$primfact <- factor(grfsp_sf$primfact, levels = levels_fixed)
+
+# Named palette (must be length = number of levels)
+pal <- viridis(length(levels_fixed), option = "D")
+names(pal) <- levels_fixed
+
+# Frequency table from the SAME factored column
+bar_df <- as.data.frame(table(grfsp_sf$primfact))
+colnames(bar_df) <- c("Factor", "Count")
+
+# Drop NA (values not in levels_fixed become NA)
+bar_df <- bar_df[!is.na(bar_df$Factor), ]
+
+# Percent
+bar_df$Percent <- 100 * bar_df$Count / sum(bar_df$Count)
+
+# Keep the same level order for coloring (important)
+bar_df$Factor <- factor(as.character(bar_df$Factor), levels = levels_fixed)
+
+# Sort for display (does NOT affect fill mapping)
+bar_df <- bar_df[order(-bar_df$Percent), ]
+
+# Plot
+bar_plot <- ggplot(bar_df,
+                   aes(x = reorder(Factor, Percent),
+                       y = Percent,
+                       fill = Factor)) +
+  geom_col(width = 0.7) +
+  scale_fill_manual(values = pal, drop = FALSE) +
+  coord_flip() +
+  ylab("Percentage (%)") +
+  xlab(NULL) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "none",
+    panel.grid.minor = element_blank()
+  )
+
+bar_plot
+
+ggsave("grfsp_barplot_300dpi.png",
+       bar_plot,
+       width = 6,
+       height = 4,
+       units = "in",
+       dpi = 300)
+
+
