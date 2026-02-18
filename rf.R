@@ -1,4 +1,3 @@
-setwd("C://Users//icozc//Documents//covid yeni")
 library(sf)
 library(sp)
 library(spdep)
@@ -739,5 +738,6 @@ ggsave("grfsp_barplot_300dpi.png",
        height = 4,
        units = "in",
        dpi = 300)
+
 
 
